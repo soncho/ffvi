@@ -1,0 +1,31 @@
+{
+
+  "manifest_version": 2,
+  "name": "ffvi",
+  "version": "0.1",
+
+  "description": "ffvi",
+
+  // "icons": {
+  //   "48": "icons/icon-48.png"
+  // },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["ffvm.js"],
+      "run_at": "document_start",
+      "match_about_blank": true
+    }
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+
+  "permissions": [
+    "tabs"
+  ]
+
+}
