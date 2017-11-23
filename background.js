@@ -1,4 +1,6 @@
 url = null;
+home = 'https://www.google.co.jp';
+search_base_url = 'https://www.google.com/search?q=';
 
 // chrome.tabs.onRemoved.addListener(
 //   function(tabId, removeInfo) {
@@ -31,6 +33,14 @@ chrome.runtime.onMessage.addListener(
         chrome.tabs.reload();
         break;
 
+      case 'search':
+        request_url = search_base_url + request.query;
+        if (request.newTab)
+          openTab(request_url);
+        else
+          chrome.tabs.update({url: request_url});
+        break;
+
       case 'yank_url':
         url = request.url;
         break;
@@ -40,6 +50,11 @@ chrome.runtime.onMessage.addListener(
           openTab(url);
         else
           chrome.tabs.update({url: url});
+        break;
+
+      case "go_home":
+        // var url = browser.browserSettings.homepageOverride.get({}).value
+        chrome.tabs.update({url: home});
         break;
     }
   }

@@ -47,12 +47,14 @@ class HintOperator {
   _createHintElem(code) {
     var hint = document.createElement('span');
     hint.textContent = code;
+    hint.style.color = 'black';
     hint.style.font = '12px bold';
-    hint.style.backgroundColor='yellow'
-    hint.style.position='absolute';
-    hint.style.top='0';
-    hint.style.left='0';
-    hint.style.padding='0.1em';
+    hint.style.backgroundColor = 'yellow'
+    hint.style.position = 'absolute';
+    hint.style.top = '0';
+    hint.style.left = '0';
+    hint.style.padding = '0.1em';
+    hint.style.zIndex = 2139999998;
 
     return hint;
   }
@@ -70,9 +72,13 @@ const STATE = {
 var curState = STATE.NORMAL;
 var ho = new HintOperator();
 var newTab = false;
+var search_form = null;
 
 function normal(key) {
   switch (key) {
+    case 'q':
+      getClipboardValue();
+      break;
     // Move
     case 'j':
       scrollByLines(5);
@@ -88,6 +94,14 @@ function normal(key) {
 
     case 'l':
       chrome.runtime.sendMessage({action: 'move_right_tab'});
+      break;
+
+    case 'H':
+      history.back();
+      break;
+
+    case 'L':
+      history.forward();
       break;
 
     case 'g':
@@ -112,10 +126,6 @@ function normal(key) {
       break;
 
     // Tab
-    case 't':
-      chrome.runtime.sendMessage({action: 'create_new_tab'});
-      break;
-
     case 'd':
       chrome.runtime.sendMessage({action: 'close_tab', focusLeft: false});
       break;
@@ -125,6 +135,19 @@ function normal(key) {
       break;
 
     case 'u':
+      break;
+
+    // Search
+    case 'o':
+      curState = STATE.INSERT;
+      newTab = false;
+      showSearchForm();
+      break;
+
+    case 't':
+      curState = STATE.INSERT;
+      newTab = true;
+      showSearchForm();
       break;
 
     case 'p':
@@ -150,7 +173,18 @@ function normal(key) {
       showHint();
       break;
 
+    case 'I':
+      curState = STATE.INSERT;
+      break;
+
+    case 'Escape':
+      document.activeElement.blur();
+      break;
+
+    default:
+      return true;
   }
+  return false;
 }
 
 function goto_(key) {
@@ -158,8 +192,13 @@ function goto_(key) {
     case 'g':
       scrollTo(0, 0);
       break;
+
+    case 'h':
+      chrome.runtime.sendMessage({action:'go_home'});
+      break;
   }
   curState = STATE.NORMAL;
+  return false;
 }
 
 function follow(key) {
@@ -187,8 +226,29 @@ function follow(key) {
         curState = STATE.NORMAL;
       }
   }
+  return false;
 }
 
+function insert(key) {
+  switch (key) {
+    case 'Escape':
+      curState = STATE.NORMAL;
+      document.activeElement.blur();
+      clearSearchForm();
+      break;
+
+    case 'Enter':
+      curState = STATE.NORMAL;
+      chrome.runtime.sendMessage({action: 'search',
+                                  query: document.activeElement.value,
+                                  newTab: newTab});
+      clearSearchForm();
+      break;
+
+  }
+
+  return true;
+}
 
 function showHint() {
   var elems = document.querySelectorAll('a');
@@ -198,7 +258,24 @@ function showHint() {
   });
 }
 
+function showSearchForm() {
+  search_form = document.createElement('input');
+  search_form.style.position = 'fixed';
+  search_form.style.left = 0;
+  search_form.style.top = 0;
+  search_form.style.zIndex = 2139999999;
 
+  document.body.appendChild(search_form);
+
+  search_form.focus();
+}
+
+function clearSearchForm() {
+  if (search_form) {
+        document.body.removeChild(search_form);
+        search_form = null;
+  }
+}
 
 function copyToClipboard(str) {
   var tmp = document.createElement('p');
@@ -209,33 +286,68 @@ function copyToClipboard(str) {
   document.body.removeChild(tmp);
 }
 
-return function (key) {
-  // console.log(curState);
-  switch(curState) {
-    case STATE.NORMAL:
-      normal(key);
-      break;
-    case STATE.GOTO:
-      goto_(key);
-      break;
-    case STATE.FOLLOW:
-      follow(key);
-      break;
-    case STATE.INSERT:
-      break;
-  }
+function getClipboardValue() {
+  var tmp = document.createElement('textarea');
+  document.body.appendChild(tmp);
+
+  tmp.focus();
+  document.execCommand('Paste');
+}
+
+return {
+  ffvi: function (key) {
+    console.log(curState);
+    var res = false;
+    switch (curState) {
+      case STATE.NORMAL:
+        res = normal(key);
+        break;
+      case STATE.GOTO:
+        res = goto_(key);
+        break;
+      case STATE.FOLLOW:
+        res = follow(key);
+        break;
+      case STATE.INSERT:
+        res = insert(key);
+        break;
+    }
+    return res;
+  },
+
+  setNormal: function() {
+    curState = STATE.NORMAL;
+  },
+
+  setInsert: function() {
+    curState = STATE.INSERT;
+  },
 }
 
 })();
 
-document.addEventListener('keypress', function(event) {
+window.document.onkeydown = function(event) {
   let key = (event.ctrlKey ? 'C-' : '') + event.key;
-  console.log(key);
-  ffvi(key);
+  if (!event.metaKey)
+    return ffvi.ffvi(key);
+  return true;
+}
+
+
+window.addEventListener('load', function() {
+  document.addEventListener('focusin', function(event) {
+    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName))
+      ffvi.setInsert();
+  });
+
+  document.addEventListener('focusout', function(event) {
+    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName))
+      ffvi.setNormal();
+  });
+})
+
+window.addEventListener('paste', function(e) {
+  // var clipboardData = e.clipboardData;
+  console.log(e.clipboardData);
 
 });
-
-window.document.onkeydown = function(event) {
-  // disable backspace
-  if (event.which == 8) return false;
-}
