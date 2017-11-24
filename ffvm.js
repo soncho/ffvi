@@ -76,9 +76,6 @@ var search_form = null;
 
 function normal(key) {
   switch (key) {
-    case 'q':
-      getClipboardValue();
-      break;
     // Move
     case 'j':
       scrollByLines(5);
@@ -122,7 +119,6 @@ function normal(key) {
 
     case 'y':
       copyToClipboard(location.href);
-      chrome.runtime.sendMessage({action: 'yank_url', url: location.href});
       break;
 
     // Tab
@@ -151,13 +147,11 @@ function normal(key) {
       break;
 
     case 'p':
-      // ToDo: refer clipboard
-      chrome.runtime.sendMessage({action: 'paste_url', newTab: false});
+      pasteQueryOrUrl(false);
       break;
 
     case 'P':
-      // ToDo: refer clipboard
-      chrome.runtime.sendMessage({action: 'paste_url', newTab: true});
+      pasteQueryOrUrl(true);
       break;
 
     // Follow
@@ -239,10 +233,12 @@ function insert(key) {
 
     case 'Enter':
       curState = STATE.NORMAL;
-      chrome.runtime.sendMessage({action: 'search',
-                                  query: document.activeElement.value,
-                                  newTab: newTab});
-      clearSearchForm();
+      if (search_form) {
+        chrome.runtime.sendMessage({action: 'search',
+                                    query: document.activeElement.value,
+                                    newTab: newTab});
+        clearSearchForm();
+      }
       break;
 
   }
@@ -288,10 +284,27 @@ function copyToClipboard(str) {
 
 function getClipboardValue() {
   var tmp = document.createElement('textarea');
+  tmp.contentEditable = true;
   document.body.appendChild(tmp);
-
   tmp.focus();
-  document.execCommand('Paste');
+
+  document.execCommand('paste');
+  value = tmp.textContent;
+  document.body.removeChild(tmp);
+
+  return value;
+}
+
+function pasteQueryOrUrl(newTab) {
+  var value = getClipboardValue();
+  if (value.startsWith('http://') || value.startsWith('https://'))
+    chrome.runtime.sendMessage({action: 'paste_url',
+                                url: value,
+                                newTab: newTab});
+  else
+    chrome.runtime.sendMessage({action: 'search',
+                                query: value,
+                                newTab: newTab});
 }
 
 return {
@@ -333,7 +346,6 @@ window.document.onkeydown = function(event) {
   return true;
 }
 
-
 window.addEventListener('load', function() {
   document.addEventListener('focusin', function(event) {
     if (['INPUT', 'TEXTAREA'].includes(event.target.tagName))
@@ -345,9 +357,3 @@ window.addEventListener('load', function() {
       ffvi.setNormal();
   });
 })
-
-window.addEventListener('paste', function(e) {
-  // var clipboardData = e.clipboardData;
-  console.log(e.clipboardData);
-
-});

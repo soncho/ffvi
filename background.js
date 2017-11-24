@@ -1,4 +1,3 @@
-url = null;
 home = 'https://www.google.co.jp';
 search_base_url = 'https://www.google.com/search?q=';
 
@@ -41,15 +40,11 @@ chrome.runtime.onMessage.addListener(
           chrome.tabs.update({url: request_url});
         break;
 
-      case 'yank_url':
-        url = request.url;
-        break;
-
       case 'paste_url':
         if (request.newTab)
-          openTab(url);
+          openTab(request.url);
         else
-          chrome.tabs.update({url: url});
+          chrome.tabs.update({url: request.url});
         break;
 
       case "go_home":
