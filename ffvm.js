@@ -152,11 +152,11 @@ function normal(key) {
       break;
 
     case 'p':
-      pasteQueryOrUrl(false);
+      search(getClipboardValue(), false);
       break;
 
     case 'P':
-      pasteQueryOrUrl(true);
+      search(getClipboardValue(), true);
       break;
 
     // Follow
@@ -242,9 +242,7 @@ function insert(key) {
     case 'Enter':
       curState = STATE.NORMAL;
       if (search_form) {
-        chrome.runtime.sendMessage({action: 'search',
-                                    query: document.activeElement.value,
-                                    newTab: newTab});
+        search(document.activeElement.value, newTab);
         clearSearchForm();
       }
       break;
@@ -307,8 +305,7 @@ function getClipboardValue() {
   return value;
 }
 
-function pasteQueryOrUrl(newTab) {
-  var value = getClipboardValue();
+function search(value, newTab) {
   if (value.startsWith('http://') || value.startsWith('https://'))
     chrome.runtime.sendMessage({action: 'paste_url',
                                 url: value,
