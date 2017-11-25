@@ -47,7 +47,7 @@ chrome.runtime.onMessage.addListener(
           chrome.tabs.update({url: request.url});
         break;
 
-      case "go_home":
+      case 'go_home':
         // var url = browser.browserSettings.homepageOverride.get({}).value
         chrome.tabs.update({url: home});
         break;

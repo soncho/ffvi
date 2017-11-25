@@ -2,12 +2,13 @@ class HintOperator {
   constructor() {
     this.map = {};
     this.input_keys = '';
+    this.zIndex = 2140000000;
   }
 
   push(code, elem) {
-    var hint = this._createHintElem(code);
-    elem.style.position="relative";
-    elem.appendChild(hint);
+    var hint = this._createHintElem(code, elem);
+    document.body.appendChild(hint);
+
 
     this.map[code] = {
       elem: elem,
@@ -16,6 +17,7 @@ class HintOperator {
   }
 
   reduce(key) {
+
     // if (del) this.input_keys = this.input_keys.slice(0, -1);
 
     this.input_keys += key
@@ -44,17 +46,19 @@ class HintOperator {
     return this.map[this.input_keys].elem;
   }
 
-  _createHintElem(code) {
+  _createHintElem(code, elem) {
+    var rect = elem.getBoundingClientRect();
+
     var hint = document.createElement('span');
     hint.textContent = code;
     hint.style.color = 'black';
     hint.style.font = '12px bold';
     hint.style.backgroundColor = 'yellow'
     hint.style.position = 'absolute';
-    hint.style.top = '0';
-    hint.style.left = '0';
+    hint.style.top = (document.documentElement.scrollTop + rect.top) + 'px';
+    hint.style.left = (document.documentElement.scrollLeft + rect.left) + 'px';
     hint.style.padding = '0.1em';
-    hint.style.zIndex = 2139999998;
+    hint.style.zIndex = this.zIndex++;
 
     return hint;
   }
@@ -73,6 +77,7 @@ var curState = STATE.NORMAL;
 var ho = new HintOperator();
 var newTab = false;
 var search_form = null;
+var formTagNames = ['INPUT', 'TEXTAREA']
 
 function normal(key) {
   switch (key) {
@@ -204,11 +209,14 @@ function follow(key) {
 
     case 'Enter':
       var elem = ho.get_elem();
-      if (newTab)
+      if (formTagNames.includes(elem.tagName)) {
+        elem.focus();
+      }
+      else if (newTab)
         chrome.runtime.sendMessage({action: 'create_new_tab',
                                     url: elem.href});
       else
-        ho.get_elem().click();
+        elem.click();
 
       ho.clear();
       curState = STATE.NORMAL;
@@ -247,10 +255,11 @@ function insert(key) {
 }
 
 function showHint() {
-  var elems = document.querySelectorAll('a');
+  var elems = document.querySelectorAll('a, input, textarea');
   code = 1;
   elems.forEach(function(elem) {
-    ho.push(code++, elem);
+    if (isVisibleElement(elem) && isElementInScreen(elem))
+      ho.push(code++, elem);
   });
 }
 
@@ -307,6 +316,17 @@ function pasteQueryOrUrl(newTab) {
                                 newTab: newTab});
 }
 
+function isVisibleElement(elem) {
+  return elem.style.display != 'none' &&
+         getComputedStyle(elem).visibility != 'hidden';
+}
+
+function isElementInScreen(elem) {
+  var rect = elem.getBoundingClientRect();
+  return (rect.top > 0 && rect.top < window.innerHeight) &&
+         (rect.left > 0 && rect.left < window.innerWidth)
+}
+
 return {
   ffvi: function (key) {
     console.log(curState);
@@ -335,6 +355,8 @@ return {
   setInsert: function() {
     curState = STATE.INSERT;
   },
+
+  formTagNames: formTagNames,
 }
 
 })();
@@ -348,12 +370,12 @@ window.document.onkeydown = function(event) {
 
 window.addEventListener('load', function() {
   document.addEventListener('focusin', function(event) {
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName))
+    if (ffvi.formTagNames.includes(event.target.tagName))
       ffvi.setInsert();
   });
 
   document.addEventListener('focusout', function(event) {
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName))
+    if (ffvi.formTagNames.includes(event.target.tagName))
       ffvi.setNormal();
   });
 })
