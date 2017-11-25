@@ -297,10 +297,12 @@ function getClipboardValue() {
   tmp.style.top = document.documentElement.scrollTop + 'px';
   tmp.style.left = '-100px';
   document.body.appendChild(tmp);
-  tmp.focus();
+  tmp.focus(); // set insert mode
 
   document.execCommand('paste');
   value = tmp.textContent;
+  tmp.blur();  // set normal mode
+
   document.body.removeChild(tmp);
 
   return value;
