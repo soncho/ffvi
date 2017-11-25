@@ -136,6 +136,7 @@ function normal(key) {
       break;
 
     case 'u':
+      chrome.runtime.sendMessage({action: 'restore_tab'});
       break;
 
     // Search

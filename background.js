@@ -32,6 +32,10 @@ chrome.runtime.onMessage.addListener(
         chrome.tabs.reload();
         break;
 
+      case 'restore_tab':
+        chrome.sessions.restore();
+        break;
+
       case 'search':
         request_url = search_base_url + request.query;
         if (request.newTab)
