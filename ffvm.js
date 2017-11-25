@@ -294,6 +294,9 @@ function copyToClipboard(str) {
 function getClipboardValue() {
   var tmp = document.createElement('textarea');
   tmp.contentEditable = true;
+  tmp.style.position = 'absolute';
+  tmp.style.top = document.documentElement.scrollTop + 'px';
+  tmp.style.left = '-100px';
   document.body.appendChild(tmp);
   tmp.focus();
 
