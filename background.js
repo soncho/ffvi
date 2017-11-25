@@ -1,14 +1,6 @@
 home = 'https://www.google.co.jp';
 search_base_url = 'https://www.google.com/search?q=';
 
-// chrome.tabs.onRemoved.addListener(
-//   function(tabId, removeInfo) {
-//     console.log(chrome.tabs.get(tabId));
-//     console.log(removeInfo);
-
-//   }
-// );
-
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     switch (request.action) {

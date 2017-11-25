@@ -3,6 +3,8 @@
   "manifest_version": 2,
   "name": "ffvi",
   "version": "0.1",
+  "author": "Soncho",
+  "homepage_url": "https://github.com/soncho/ffvi",
 
   "description": "ffvi",
 
