@@ -34,6 +34,15 @@ class HintOperator {
     return isMatch;
   }
 
+  undo() {
+    if (!this.input_keys) return
+    this.input_keys = this.input_keys.slice(0, -1);
+    for (code in this.map) {
+      if (code.startsWith(this.input_keys))
+        this.map[code].hint.style.display = '';
+    }
+  }
+
   clear() {
     for (code in this.map) {
       this.map[code].hint.remove();
@@ -223,11 +232,16 @@ function follow(key) {
       curState = STATE.NORMAL;
       break;
 
+    case 'Backspace':
+      ho.undo();
+      break;
+
     default:
       if (!ho.reduce(key)) {
         ho.clear();
         curState = STATE.NORMAL;
       }
+      break;
   }
   return false;
 }
@@ -247,7 +261,6 @@ function insert(key) {
         clearSearchForm();
       }
       break;
-
   }
 
   return true;
