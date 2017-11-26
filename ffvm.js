@@ -3,11 +3,17 @@ class HintOperator {
     this.map = {};
     this.input_keys = '';
     this.zIndex = 2140000000;
+
+    var self = this
+    window.addEventListener('load', function() {
+      self.divElem = document.createElement('div');
+      document.lastChild.appendChild(self.divElem);
+    })
   }
 
   push(code, elem) {
     var hint = this._createHintElem(code, elem);
-    document.body.appendChild(hint);
+    this.divElem.appendChild(hint);
 
 
     this.map[code] = {
@@ -18,18 +24,14 @@ class HintOperator {
 
   reduce(key) {
 
-    // if (del) this.input_keys = this.input_keys.slice(0, -1);
-
     this.input_keys += key
 
     var isMatch = false;
     for (code in this.map) {
       if (!code.startsWith(this.input_keys))
         this.map[code].hint.style.display = 'none';
-      else {
+      else
         isMatch = true;
-        // this.map[code].hint.style.display = '';
-      }
     }
     return isMatch;
   }
@@ -64,8 +66,8 @@ class HintOperator {
     hint.style.font = '12px bold';
     hint.style.backgroundColor = 'yellow'
     hint.style.position = 'absolute';
-    hint.style.top = (document.documentElement.scrollTop + rect.top) + 'px';
-    hint.style.left = (document.documentElement.scrollLeft + rect.left) + 'px';
+    hint.style.top = (document.scrollingElement.scrollTop + rect.top) + 'px';
+    hint.style.left = (document.scrollingElement.scrollLeft + rect.left) + 'px';
     hint.style.padding = '0.1em';
     hint.style.zIndex = this.zIndex++;
 
@@ -307,7 +309,7 @@ function getClipboardValue() {
   var tmp = document.createElement('textarea');
   tmp.contentEditable = true;
   tmp.style.position = 'absolute';
-  tmp.style.top = document.documentElement.scrollTop + 'px';
+  tmp.style.top = document.scrollingElement.scrollTop + 'px';
   tmp.style.left = '-100px';
   document.body.appendChild(tmp);
   tmp.focus(); // set insert mode
