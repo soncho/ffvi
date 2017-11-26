@@ -27,9 +27,11 @@
 
 
   "permissions": [
+    "<all_urls>",
     "tabs",
     "clipboardRead",
-    "sessions"
+    "sessions",
+    "bookmarks"
   ]
 
 }

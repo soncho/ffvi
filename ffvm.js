@@ -263,6 +263,28 @@ function insert(key) {
         clearSearchForm();
       }
       break;
+
+    case 'Tab':
+      curState = STATE.NORMAL;
+      clearSearchForm();
+      break;
+
+    case 'Shift':
+    case 'Alt':
+    case 'C-Control':
+      break;
+
+    case 'Backspace':
+      if (search_form)
+        chrome.runtime.sendMessage({action: 'update_bookmark_suggest',
+                                    query: search_form.value.slice(0, -1)});
+      break;
+
+    default:
+      if (search_form)
+        chrome.runtime.sendMessage({action: 'update_bookmark_suggest',
+                                    query: search_form.value + key});
+      break;
   }
 
   return true;
@@ -347,7 +369,7 @@ function isElementInScreen(elem) {
 
 return {
   ffvi: function (key) {
-    console.log(curState);
+    // console.log(curState);
     var res = false;
     switch (curState) {
       case STATE.NORMAL:
@@ -374,6 +396,12 @@ return {
     curState = STATE.INSERT;
   },
 
+  updateBookmarks: function() {
+    if (curState == STATE.INSERT && search_form)
+      chrome.runtime.sendMessage({action: 'update_bookmark_suggest',
+                                  query: search_form.value});
+  },
+
   formTagNames: formTagNames,
 }
 
@@ -381,9 +409,16 @@ return {
 
 window.document.onkeydown = function(event) {
   let key = (event.ctrlKey ? 'C-' : '') + event.key;
+  // console.log(key);
   if (!event.metaKey)
     return ffvi.ffvi(key);
   return true;
+}
+
+window.document.onkeyup = function(event) {
+  // 文字変換時のEnterを捕捉
+  if (event.key == 'Enter')
+    ffvi.updateBookmarks();
 }
 
 window.addEventListener('load', function() {
@@ -396,4 +431,12 @@ window.addEventListener('load', function() {
     if (ffvi.formTagNames.includes(event.target.tagName))
       ffvi.setNormal();
   });
+})
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse){
+    console.log(request);
+
+    // ToDo: サジェストをアップデート
+
 })

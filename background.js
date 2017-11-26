@@ -47,9 +47,19 @@ chrome.runtime.onMessage.addListener(
         // var url = browser.browserSettings.homepageOverride.get({}).value
         chrome.tabs.update({url: home});
         break;
+
+      case 'update_bookmark_suggest':
+        sendBookmark(request.query);
+        break;
     }
   }
 );
+
+function searchBookmarks(query) {
+  return new Promise(function(resolve) {
+    return chrome.bookmarks.search(query, resolve);
+  });
+}
 
 function query(options) {
   return new Promise(function(resolve) {
@@ -94,5 +104,13 @@ function closeTab() {
 function openTab(url) {
   getActiveTab().then(function (tab) {
     chrome.tabs.create({url: url, index: tab.index + 1});
-  })
+  });
+}
+
+function sendBookmark(query) {
+  Promise.all([getActiveTab(), searchBookmarks(query)]).then(function(values) {
+    var activeTabId = values[0].id;
+    var bookmarks = {response: values[1]};
+    chrome.tabs.sendMessage(activeTabId, bookmarks, function() {});
+  });
 }
